@@ -101,9 +101,6 @@ namespace Dots
                         tasks = JsonSerializer.Deserialize<TaskRequest[]>(responseBody);
                     } catch (Exception ex) 
                     {
-                        // Failed to parse batch request.
-                        // Console.WriteLine("Failed");
-                        //{"jsonrpc": "2.0", "error": {"code": -32700, "message": "Parse error"}, "id": null}
                         TaskError failedToParseError = new TaskError
                         {
                             JSONRPC = "2.0",
