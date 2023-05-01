@@ -1,6 +1,7 @@
 ﻿using Dots.Models;
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -75,6 +76,16 @@ namespace SystemInformation
             var host = Dns.GetHostEntry(Dns.GetHostName());
             var ip = host.AddressList.FirstOrDefault(_ip => _ip.AddressFamily == AddressFamily.InterNetwork);
             SetupResult(task, ip != null ? ip.ToString() : "0.0.0.0");
+        }
+    }
+
+    public class PwdCommand : DotsCommand
+    {
+        public override string Name => "pwd";
+
+        public override void Execute(TaskRequest task)
+        {
+            SetupResult(task, Directory.GetCurrentDirectory());
         }
     }
 }
