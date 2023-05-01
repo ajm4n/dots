@@ -13,14 +13,23 @@
 			[ "file", "The file to download" ]
 		],
 		2,
-		"/Modules/SystemInformation.exe"
+		"/Modules/FileSystem.exe"
 	],
 	[
 		"drives",
 		"Retrieve all of the drives",
 		[],
 		1,
-		"/Modules/SystemInformation.exe"
+		"/Modules/FileSystem.exe"
+	],
+	[
+		"dir",
+		"Retrieve all of the drives",
+		[
+			[ "directory", "The directory to list" ]
+		],
+		1,
+		"/Modules/FileSystem.exe"
 	],
 	[
 		"execute_assembly",
@@ -50,7 +59,7 @@
 		"Meet the garbage collector",
 		[],
 		0,
-		"/Modules/SystemInformation.exe"
+		""
 	],
 	[
 		"os",
@@ -98,8 +107,8 @@
 			[ "file", "The file to upload" ],
 			[ "path", "The upload location" ]
 		],
-		2,
-		"/Modules/SystemInformation.exe"
+		1,
+		"/Modules/FileSystem.exe"
 	],
 	[
 		"whoami",
