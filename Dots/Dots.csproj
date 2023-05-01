@@ -75,7 +75,9 @@
   <ItemGroup>
     <Compile Include="Commands\Kill.cs" />
     <Compile Include="Commands\Load.cs" />
+    <Compile Include="Commands\Socks.cs" />
     <Compile Include="Models\DotsCommand.cs" />
+    <Compile Include="Models\DotsProperties.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Models\DotsTask.cs" />
     <Compile Include="TaskManager.cs" />

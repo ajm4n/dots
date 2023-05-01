@@ -1,11 +1,9 @@
 ﻿using Dots.Models;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
+
 
 namespace Dots
 {
@@ -13,13 +11,14 @@ namespace Dots
     {
         private static TaskManager _taskManager;
         private static CancellationTokenSource _tokenSource;
+        private static DotsProperties _dotsProperty = new DotsProperties();
 
         public static void Main(string[] args)
         {
             _taskManager = new TaskManager(args[0]);
             _taskManager.Init();
             _taskManager.InitialCheckin(args[1]);
-            _taskManager.Start();
+            _taskManager.Start(_dotsProperty);
             _tokenSource = new CancellationTokenSource();
             while (!_tokenSource.IsCancellationRequested)
             {
@@ -51,7 +50,7 @@ namespace Dots
                         {
                             try
                             {
-                                command.Execute(task);
+                                command.Execute(task, _dotsProperty);
                             } catch (Exception ex)
                             {
                                 TaskError failedToExecuteError = new TaskError

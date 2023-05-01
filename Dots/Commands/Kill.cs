@@ -1,9 +1,5 @@
-﻿using Dots.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
+using Dots.Models;
 
 namespace Dots.Commands
 { 
@@ -11,7 +7,7 @@ namespace Dots.Commands
     {
         public override string Name => "kill";
 
-        public override void Execute(TaskRequest task)
+        public override void Execute(TaskRequest task, DotsProperties dotsProperty)
         {
             Environment.Exit(0);
             SetupResult(task, "Success");

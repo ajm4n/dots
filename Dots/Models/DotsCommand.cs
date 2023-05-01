@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+
 
 namespace Dots.Models
 {
@@ -10,7 +8,8 @@ namespace Dots.Models
     {
         public abstract string Name { get; }
         public TaskResult Result { get; set; }
-        public abstract void Execute(TaskRequest task);
+        public abstract void Execute(TaskRequest task, DotsProperties dotsProperty);
+
         public static byte[] Zor(byte[] input, string key)
         {
             int _key = Int32.Parse(key);

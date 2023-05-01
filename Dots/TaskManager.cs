@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Text;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Text.Json;
 using System.Collections.Concurrent;
 using System.Threading;
 using Dots.Models;
+
 
 namespace Dots
 {
@@ -71,11 +70,12 @@ namespace Dots
             }
         }
 
-        public async Task Start()
+        public async Task Start(DotsProperties _dotsProperty)
         {
             _tokenSource = new CancellationTokenSource();
             while (!_tokenSource.IsCancellationRequested)
             {
+                Thread.Sleep(_dotsProperty.Delay);
                 if (_checkInTask !=  null) {
                     _batchResults.Enqueue(_checkInTask);
                 } else

