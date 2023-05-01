@@ -40,28 +40,42 @@ namespace Dots
 
         private static void ExecuteTask(TaskRequest task)
         {
-            var assembly = Assembly.GetExecutingAssembly();
-
-            foreach (var type in assembly.GetTypes())
+            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
-                if (type.IsSubclassOf(typeof(DotsCommand)))
+                foreach (var type in assembly.GetTypes())
                 {
-                    DotsCommand command = (DotsCommand)Activator.CreateInstance(type);
-                    if (command.Name == task.Method)
+                    if (type.IsSubclassOf(typeof(DotsCommand)))
                     {
-                        Console.WriteLine(task.Method);
-                        command.Execute(task);
-                        if (command.Result != null)
+                        DotsCommand command = (DotsCommand)Activator.CreateInstance(type);
+                        if (command.Name == task.Method)
                         {
-                            _taskManager.SendResult(command.Result);
-                        }
-                        if (command.Error != null)
-                        {
-                            _taskManager.SendError(command.Error);
+                            command.Execute(task);
+                            if (command.Result != null)
+                            {
+                                _taskManager.SendResult(command.Result);
+                            }
+                            if (command.Error != null)
+                            {
+                                _taskManager.SendError(command.Error);
+                            }
+                            return;
                         }
                     }
                 }
             }
+
+
+            TaskError methodNotSupportedError = new TaskError
+            {
+                JSONRPC = task.JSONRPC,
+                Error = new TaskErrorDetails
+                {
+                    Code = -32601,
+                    Message = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{task.Method} is not supported")),
+                },
+                Id = task.Id,
+            };
+            _taskManager.SendError(methodNotSupportedError);
         }
     }
 }

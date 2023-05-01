@@ -18,7 +18,7 @@ namespace Dots.Models
             Error = new TaskError
             {
                 JSONRPC = task.JSONRPC,
-                ErrorDetails = new TaskErrorDetails
+                Error = new TaskErrorDetails
                 {
                     Code = -32602,
                     Message = message,

@@ -90,21 +90,38 @@ namespace Dots
                 batchResponse.AddRange(batchResult);
                 batchResponse.AddRange(batchErrors);
                 string json = JsonSerializer.Serialize(batchResponse);
-
-                HttpResponseMessage response = await _client.PostAsync(GenerateEndpoint(), new StringContent(json, Encoding.UTF8, "application/json"));
-                TaskRequest[] tasks = null;
+                HttpResponseMessage response = new HttpResponseMessage();
+                try
+                {
+                    response = await _client.PostAsync(GenerateEndpoint(), new StringContent(json, Encoding.UTF8, "application/json"));
+                } catch
+                {
+                    continue;
+                }
                 if (response.IsSuccessStatusCode)
                 {
                     try
                     {
                         string responseBody = await response.Content.ReadAsStringAsync();
-                        tasks = JsonSerializer.Deserialize<TaskRequest[]>(responseBody);
+                        var tasks = JsonSerializer.Deserialize<TaskRequest[]>(responseBody);
+                        if (tasks != null && tasks.Any())
+                        {
+                            foreach (var task in tasks)
+                            {
+                                for (int i = 0; i < task.Params.Length; i++)
+                                {
+                                    task.Params[i] = Base64Decode(task.Params[i]);
+                                }
+
+                                _batchRequest.Enqueue(task);
+                            }
+                        }
                     } catch (Exception ex) 
                     {
                         TaskError failedToParseError = new TaskError
                         {
                             JSONRPC = "2.0",
-                            ErrorDetails = new TaskErrorDetails
+                            Error = new TaskErrorDetails
                             {
                                 Code = -32700,
                                 Message = Convert.ToBase64String(Encoding.UTF8.GetBytes(ex.Message)),
@@ -114,17 +131,7 @@ namespace Dots
                         _batchErrors.Enqueue(failedToParseError);
                     }
                 }
-                if (tasks != null && tasks.Any()) {
-                    foreach (var task in tasks)
-                    {
-                        for (int i = 0; i < task.Params.Length; i++)
-                        {
-                            task.Params[i] = Base64Decode(task.Params[i]);
-                        }
-
-                        _batchRequest.Enqueue(task);
-                    }
-                }
+                
             }
         }
 

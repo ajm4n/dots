@@ -33,7 +33,8 @@ namespace Dots.Models
 
     public class TaskError : DotsTask
     {
-        public TaskErrorDetails ErrorDetails { get; set; }
+        [JsonPropertyName("error")]
+        public TaskErrorDetails Error { get; set; }
     }
 
     public class TaskErrorDetails

@@ -3,7 +3,8 @@
 		"arch",
 		"Retrieve the current processes architecthure",
 		[],
-		1
+		1,
+		"/Modules/SystemInformation.exe"
 	],
 	[
 		"download",
@@ -11,13 +12,15 @@
 		[
 			[ "file", "The file to download" ]
 		],
-		2
+		2,
+		"/Modules/SystemInformation.exe"
 	],
 	[
 		"drives",
 		"Retrieve all of the drives",
 		[],
-		1
+		1,
+		"/Modules/SystemInformation.exe"
 	],
 	[
 		"execute_assembly",
@@ -25,43 +28,50 @@
 		[
 			[ "assembly", "The .NET Assembly to execute" ]
 		],
-		1
+		1,
+		"/Modules/SystemInformation.exe"
 	],
 	[
 		"hostname",
 		"Retrieve the hostname of the machine",
 		[],
-		1
+		1,
+		"/Modules/SystemInformation.exe"
 	],
 	[
 		"ip",
 		"Retrieve the IP of the machine",
 		[],
-		1
+		1,
+		"/Modules/SystemInformation.exe"
 	],
 	[
 		"kill",
 		"Meet the garbage collector",
 		[],
-		0
+		0,
+		"/Modules/SystemInformation.exe"
 	],
 	[
 		"os",
 		"Retrieve the Operating System of the machine",
 		[],
-		1
+		1,
+		"/Modules/SystemInformation.exe"
 	],
 	[
 		"pid",
 		"Retrive the process ID",
 		[],
-		1
+		1,
+		"/Modules/SystemInformation.exe"
 	],
 	[
 		"pwd",
 		"Retrieve the current working directory",
 		[],
-		1
+		1,
+		"/Modules/SystemInformation.exe"
 	],
 	[
 		"shell",
@@ -69,7 +79,8 @@
 		[
 			[ "command", "The command to execute" ]
 		],
-		1
+		1,
+		"/Modules/SystemInformation.exe"
 	],
 	[
 		"spawn",
@@ -77,7 +88,8 @@
 		[
 			[ "implant_id", "The Implant to spawn the Agent from" ]
 		],
-		1
+		1,
+		"/Modules/SystemInformation.exe"
 	],
 	[
 		"upload",
@@ -86,12 +98,14 @@
 			[ "file", "The file to upload" ],
 			[ "path", "The upload location" ]
 		],
-		2
+		2,
+		"/Modules/SystemInformation.exe"
 	],
 	[
 		"whoami",
 		"Retrieve the current user",
 		[],
-		1
+		1,
+		"/Modules/SystemInformation.exe"
 	]
 ]
