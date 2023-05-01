@@ -49,15 +49,25 @@ namespace Dots
                         DotsCommand command = (DotsCommand)Activator.CreateInstance(type);
                         if (command.Name == task.Method)
                         {
-                            command.Execute(task);
-                            if (command.Result != null)
+                            try
                             {
-                                _taskManager.SendResult(command.Result);
-                            }
-                            if (command.Error != null)
+                                command.Execute(task);
+                            } catch (Exception ex)
                             {
-                                _taskManager.SendError(command.Error);
+                                TaskError failedToExecuteError = new TaskError
+                                {
+                                    JSONRPC = "2.0",
+                                    Error = new TaskErrorDetails
+                                    {
+                                        Code = -32000,
+                                        Message = Convert.ToBase64String(Encoding.UTF8.GetBytes(ex.Message)),
+                                    },
+                                    Id = task.Id
+                                };
+                                _taskManager.SendError(failedToExecuteError);
+                                return;
                             }
+                            _taskManager.SendResult(command.Result);
                             return;
                         }
                     }

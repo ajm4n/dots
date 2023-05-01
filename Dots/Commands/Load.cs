@@ -25,15 +25,8 @@ namespace Dots.Commands
 
         public override void Execute(TaskRequest task)
         {
-            try
-            {
-                Assembly assembly = Assembly.Load(Zor(Convert.FromBase64String(task.Params[0]), task.Params[1]));
-                SetupResult(task, $"Succesfully loaded {assembly.FullName} module.");
-            }
-            catch (Exception e)
-            {
-                SetupError(task, e.ToString());
-            }
+            Assembly assembly = Assembly.Load(Zor(Convert.FromBase64String(task.Params[0]), task.Params[1]));
+            SetupResult(task, $"Succesfully loaded {assembly.FullName} module.");
         }
     }
 }
