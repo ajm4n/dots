@@ -74,7 +74,7 @@ namespace SystemInformation
         {
             var host = Dns.GetHostEntry(Dns.GetHostName());
             var ip = host.AddressList.FirstOrDefault(_ip => _ip.AddressFamily == AddressFamily.InterNetwork);
-            SetupResult(task, ip);
+            SetupResult(task, ip != null ? ip.ToString() : "0.0.0.0");
         }
     }
 }
