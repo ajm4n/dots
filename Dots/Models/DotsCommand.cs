@@ -7,9 +7,8 @@ namespace Dots.Models
     public abstract class DotsCommand
     {
         public abstract string Name { get; }
-        public TaskResult Result { get; set; }
-        public abstract void Execute(TaskRequest task, DotsProperties dotsProperty);
-
+        public abstract DotsProperties DotsProperty { get; set; }
+        public abstract string Execute(string[] args);
         public static byte[] Zor(byte[] input, string key)
         {
             int _key = Int32.Parse(key);
@@ -19,23 +18,6 @@ namespace Dots.Models
                 mixed[i] = (byte)(input[i] ^ _key);
             }
             return mixed;
-        }
-        public void SetupResult(TaskRequest task, dynamic result)
-        {
-            if (result is byte[])
-            {
-                result = Convert.ToBase64String(result);
-            } else
-            {
-                result = Convert.ToBase64String(Encoding.UTF8.GetBytes(result));
-            }
-
-            Result = new TaskResult
-            {
-                JSONRPC = task.JSONRPC,
-                Result = result,
-                Id = task.Id
-            };
         }
     };
 }

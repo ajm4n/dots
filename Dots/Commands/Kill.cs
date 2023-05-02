@@ -2,15 +2,16 @@
 using Dots.Models;
 
 namespace Dots.Commands
-{ 
+{
     public class KillCommand : DotsCommand
     {
         public override string Name => "kill";
-
-        public override void Execute(TaskRequest task, DotsProperties dotsProperty)
+        public override DotsProperties DotsProperty { get ; set; }
+        public override string Execute(string[] args)
         {
             Environment.Exit(0);
-            SetupResult(task, "Success");
+            return "Success";
         }
     }
+
 }

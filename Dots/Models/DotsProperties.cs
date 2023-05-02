@@ -16,6 +16,7 @@ namespace Dots.Models
         public int Delay => 0;
 
         public ConcurrentDictionary<int, Socket> Remotes = new ConcurrentDictionary<int, Socket>();
+        public List<Object> Commands = new List<Object>();
         public int AddRemote(Socket socket)
         {
             int key;

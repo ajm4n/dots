@@ -4,88 +4,89 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Policy;
 using System.Security.Principal;
-using Dots.Models;
 
 namespace SystemInformation
 {
-    public class Program { public static void Main(string[] args) { } }
-
-    public class WhoamiCommand : DotsCommand
+    public class WhoamiCommand
     {
-        public override string Name => "whoami";
+        public string Name => "whoami";
 
         public static string IsAdministrator()
         {
             WindowsPrincipal principal = new WindowsPrincipal(WindowsIdentity.GetCurrent());
-            return principal.IsInRole(WindowsBuiltInRole.Administrator) ? "*" : ""; 
+            return principal.IsInRole(WindowsBuiltInRole.Administrator) ? "*" : "";
         }
 
-        public override void Execute(TaskRequest task, DotsProperties dotsProperty)
+        public string Execute(string[] args)
         {
-            SetupResult(task, IsAdministrator() + WindowsIdentity.GetCurrent().Name);
+            return IsAdministrator() + WindowsIdentity.GetCurrent().Name;
         }
     }
 
-    public class HostnameCommand : DotsCommand
-    {
-        public override string Name => "hostname";
 
-        public override void Execute(TaskRequest task, DotsProperties dotsProperty)
+    public class HostnameCommand
+    {
+        public string Name => "hostname";
+
+        public string Execute(string[] args)
         {
-            SetupResult(task, Environment.MachineName);
+            return Environment.MachineName;
         }
     }
 
-    public class OsCommand : DotsCommand
+    public class OsCommand
     {
-        public override string Name => "os";
+        public string Name => "os";
 
-        public override void Execute(TaskRequest task, DotsProperties dotsProperty)  
+        public string Execute(string[] args)
         {
-            SetupResult(task, Environment.OSVersion.VersionString);
+            return Environment.OSVersion.VersionString;
         }
     }
 
-    public class PidCommand : DotsCommand
+    public class PidCommand
     {
-        public override string Name => "pid";
+        public string Name => "pid";
 
-        public override void Execute(TaskRequest task, DotsProperties dotsProperty)
+        public string Execute(string[] args)
         {
-            SetupResult(task, Process.GetCurrentProcess().Id.ToString());
+            return Process.GetCurrentProcess().Id.ToString();
         }
     }
 
-    public class ArchCommand : DotsCommand
+    public class ArchCommand
     {
-        public override string Name => "arch";
+        public string Name => "arch";
 
-        public override void Execute(TaskRequest task, DotsProperties dotsProperty)
+        public string Execute(string[] args)
         {
-            SetupResult(task, IntPtr.Size == 8 ? "x64" : "x86");
+            return IntPtr.Size == 8 ? "x64" : "x86";
         }
     }
 
-    public class IpCommand : DotsCommand
-    {
-        public override string Name => "ip";
 
-        public override void Execute(TaskRequest task, DotsProperties dotsProperty)
+    public class IpCommand
+    {
+        public string Name => "ip";
+
+        public string Execute(string[] args)
         {
             var host = Dns.GetHostEntry(Dns.GetHostName());
             var ip = host.AddressList.FirstOrDefault(_ip => _ip.AddressFamily == AddressFamily.InterNetwork);
-            SetupResult(task, ip != null ? ip.ToString() : "0.0.0.0");
+            return ip != null ? ip.ToString() : "0.0.0.0";
         }
     }
 
-    public class PwdCommand : DotsCommand
+    public class PwdCommand
     {
-        public override string Name => "pwd";
+        public string Name => "pwd";
 
-        public override void Execute(TaskRequest task, DotsProperties dotsProperty)
+        public string Execute(string[] args)
         {
-            SetupResult(task, Directory.GetCurrentDirectory());
+            return Directory.GetCurrentDirectory();
         }
     }
+
 }

