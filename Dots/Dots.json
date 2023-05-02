@@ -4,7 +4,7 @@
 		"Retrieve the current processes architecthure",
 		[],
 		1,
-		"/Modules/SystemInformation.exe"
+		"/Modules/SystemInformation.dll"
 	],
 	[
 		"download",
@@ -13,14 +13,14 @@
 			[ "file", "The file to download" ]
 		],
 		2,
-		"/Modules/FileSystem.exe"
+		"/Modules/FileSystem.dll"
 	],
 	[
 		"drives",
 		"Retrieve all of the drives",
 		[],
 		1,
-		"/Modules/FileSystem.exe"
+		"/Modules/FileSystem.dll"
 	],
 	[
 		"dir",
@@ -29,7 +29,7 @@
 			[ "directory", "The directory to list" ]
 		],
 		1,
-		"/Modules/FileSystem.exe"
+		"/Modules/FileSystem.dll"
 	],
 	[
 		"execute_assembly",
@@ -38,21 +38,21 @@
 			[ "assembly", "The .NET Assembly to execute" ]
 		],
 		1,
-		"/Modules/SystemInformation.exe"
+		"/Modules/SystemInformation.dll"
 	],
 	[
 		"hostname",
 		"Retrieve the hostname of the machine",
 		[],
 		1,
-		"/Modules/SystemInformation.exe"
+		"/Modules/SystemInformation.dll"
 	],
 	[
 		"ip",
 		"Retrieve the IP of the machine",
 		[],
 		1,
-		"/Modules/SystemInformation.exe"
+		"/Modules/SystemInformation.dll"
 	],
 	[
 		"kill",
@@ -66,14 +66,14 @@
 		"Retrieve the Operating System of the machine",
 		[],
 		1,
-		"/Modules/SystemInformation.exe"
+		"/Modules/SystemInformation.dll"
 	],
 	[
 		"pid",
 		"Retrive the process ID",
 		[],
 		1,
-		"/Modules/SystemInformation.exe"
+		"/Modules/SystemInformation.dll"
 	],
 	[
 		"portscan",
@@ -83,14 +83,14 @@
 			[ "ports", "The port(s) to scan e.g., 80,445,8000-8100" ]
 		],
 		1,
-		"/Modules/Portscan.exe"
+		"/Modules/Portscan.dll"
 	],
 	[
 		"pwd",
 		"Retrieve the current working directory",
 		[],
 		1,
-		"/Modules/SystemInformation.exe"
+		"/Modules/SystemInformation.dll"
 	],
 	[
 		"shell",
@@ -99,7 +99,7 @@
 			[ "command", "The command to execute" ]
 		],
 		1,
-		"/Modules/SystemInformation.exe"
+		"/Modules/SystemInformation.dll"
 	],
 	[
 		"spawn",
@@ -108,7 +108,7 @@
 			[ "implant_id", "The Implant to spawn the Agent from" ]
 		],
 		1,
-		"/Modules/SystemInformation.exe"
+		"/Modules/SystemInformation.dll"
 	],
 	[
 		"upload",
@@ -118,13 +118,13 @@
 			[ "path", "The upload location" ]
 		],
 		1,
-		"/Modules/FileSystem.exe"
+		"/Modules/FileSystem.dll"
 	],
 	[
 		"whoami",
 		"Retrieve the current user",
 		[],
 		1,
-		"/Modules/SystemInformation.exe"
+		"/Modules/SystemInformation.dll"
 	]
 ]
