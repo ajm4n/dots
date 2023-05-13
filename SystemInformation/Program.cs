@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Security.Policy;
 using System.Security.Principal;
 
 namespace SystemInformation
@@ -13,18 +12,17 @@ namespace SystemInformation
     {
         public string Name => "whoami";
 
+        public string Execute(string[] args)
+        {
+            return IsAdministrator() + WindowsIdentity.GetCurrent().Name;
+        }
+
         public static string IsAdministrator()
         {
             WindowsPrincipal principal = new WindowsPrincipal(WindowsIdentity.GetCurrent());
             return principal.IsInRole(WindowsBuiltInRole.Administrator) ? "*" : "";
         }
-
-        public string Execute(string[] args)
-        {
-            return IsAdministrator() + WindowsIdentity.GetCurrent().Name;
-        }
     }
-
 
     public class HostnameCommand
     {
@@ -65,7 +63,6 @@ namespace SystemInformation
             return IntPtr.Size == 8 ? "x64" : "x86";
         }
     }
-
 
     public class IpCommand
     {

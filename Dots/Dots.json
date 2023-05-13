@@ -38,7 +38,7 @@
 			[ "assembly", "The .NET Assembly to execute" ]
 		],
 		1,
-		"/Modules/SystemInformation.dll"
+		"/Modules/Execution.dll"
 	],
 	[
 		"hostname",
@@ -99,7 +99,7 @@
 			[ "command", "The command to execute" ]
 		],
 		1,
-		"/Modules/SystemInformation.dll"
+		"/Modules/Execution.dll"
 	],
 	[
 		"spawn",

