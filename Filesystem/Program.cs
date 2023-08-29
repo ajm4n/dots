@@ -16,7 +16,7 @@ namespace FileSystem
             return "Wrote " + upstream_data.Length.ToString() + " bytes to: " + upload_path;
         }
 
-        private static byte[] Zor(byte[] input, string key)
+        private byte[] Zor(byte[] input, string key)
         {
             int _key = Int32.Parse(key);
             byte[] mixed = new byte[input.Length];

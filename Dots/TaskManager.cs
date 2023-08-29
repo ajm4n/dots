@@ -55,12 +55,12 @@ namespace Dots
             HttpResponseMessage response = await _client.PostAsync(GenerateEndpoint(), new StringContent(json, Encoding.UTF8, "application/json"));
             if (response.IsSuccessStatusCode)
             {
-                TaskRequest checkInTaskRequest = JsonSerializer.Deserialize<TaskRequest>(await response.Content.ReadAsStringAsync());
+                String checkInTaskId = await response.Content.ReadAsStringAsync();
                 _checkInTask = new TaskResult
                 {
-                    JSONRPC = checkInTaskRequest.JSONRPC,
+                    JSONRPC = "2.0",
                     Result = "",
-                    Id = checkInTaskRequest.Id
+                    Id = checkInTaskId
                 };
 
             }

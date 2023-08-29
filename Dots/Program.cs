@@ -59,8 +59,8 @@ namespace Dots
                 try
                 {
                     Type commandType = command.GetType();
-
                     PropertyInfo nameProperty = commandType.GetProperty("Name");
+ 
                     if (nameProperty == null || nameProperty.PropertyType != typeof(string))
                     {
                         // The command object does not have a valid "Name" property
@@ -75,6 +75,8 @@ namespace Dots
                     }
 
                     string name = (string)nameProperty.GetValue(command);
+
+                   
 
                     if (name == task.Method)
                     {
@@ -103,7 +105,6 @@ namespace Dots
                 }
                 catch (Exception ex)
                 {
-
                     TaskError failedToExecuteError = new TaskError
                     {
                         JSONRPC = "2.0",

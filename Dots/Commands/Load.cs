@@ -14,11 +14,12 @@ namespace Dots.Commands
         public override DotsProperties DotsProperty { get; set; }
 
         public override string Execute(string[] args)
-        {
+        {           
             Assembly assembly = Assembly.Load(Zor(Convert.FromBase64String(args[0]), args[1]));
-            foreach (var type in assembly.GetTypes())
+
+            foreach (Type type in assembly.GetExportedTypes())
             {
-                Object command = Activator.CreateInstance(type);
+                object command = Activator.CreateInstance(type);
                 DotsProperty.Commands.Add(command);
             }
             return $"Succesfully loaded {assembly.FullName} module.";

@@ -17,7 +17,7 @@ namespace SystemInformation
             return IsAdministrator() + WindowsIdentity.GetCurrent().Name;
         }
 
-        public static string IsAdministrator()
+        private string IsAdministrator()
         {
             WindowsPrincipal principal = new WindowsPrincipal(WindowsIdentity.GetCurrent());
             return principal.IsInRole(WindowsBuiltInRole.Administrator) ? "*" : "";
@@ -30,7 +30,7 @@ namespace SystemInformation
 
         public string Execute(string[] args)
         {
-            return Environment.MachineName;
+            return "DNS: " + Dns.GetHostName() + "\nNETBIOS: " + Environment.MachineName;
         }
     }
 
