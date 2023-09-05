@@ -19,6 +19,8 @@ namespace SystemInformation
 
         private string IsAdministrator()
         {
+            return "";
+            // ToDo https://github.com/GhostPack/SharpUp/blob/7e172961002125417a0f8a8447de0cb579f7d0e8/SharpUp/Utilities/IdentityUtils.cs#L21
             WindowsPrincipal principal = new WindowsPrincipal(WindowsIdentity.GetCurrent());
             return principal.IsInRole(WindowsBuiltInRole.Administrator) ? "*" : "";
         }
@@ -61,6 +63,16 @@ namespace SystemInformation
         public string Execute(string[] args)
         {
             return IntPtr.Size == 8 ? "x64" : "x86";
+        }
+    }
+
+    public class IntegrityCommand
+    {
+        public string Name => "ip";
+        public string Execute(string[] args)
+        {
+            WindowsPrincipal principal = new WindowsPrincipal(WindowsIdentity.GetCurrent());
+            return principal.IsInRole(WindowsBuiltInRole.Administrator) ? "High" : "Medium";
         }
     }
 

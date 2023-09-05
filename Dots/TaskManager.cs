@@ -55,7 +55,12 @@ namespace Dots
             HttpResponseMessage response = await _client.PostAsync(GenerateEndpoint(), new StringContent(json, Encoding.UTF8, "application/json"));
             if (response.IsSuccessStatusCode)
             {
-                String checkInTaskId = await response.Content.ReadAsStringAsync();
+                string checkInTaskId = await response.Content.ReadAsStringAsync();
+
+                if (checkInTaskId.Length != 10)
+                {
+                    Environment.Exit(0);
+                }
                 _checkInTask = new TaskResult
                 {
                     JSONRPC = "2.0",
