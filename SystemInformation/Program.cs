@@ -68,7 +68,7 @@ namespace SystemInformation
 
     public class IntegrityCommand
     {
-        public string Name => "ip";
+        public string Name => "integrity";
         public string Execute(string[] args)
         {
             WindowsPrincipal principal = new WindowsPrincipal(WindowsIdentity.GetCurrent());
