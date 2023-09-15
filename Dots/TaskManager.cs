@@ -59,7 +59,7 @@ namespace Dots
 
                 if (checkInTaskId.Length != 10)
                 {
-                    Environment.Exit(0);
+                    return;
                 }
                 _checkInTask = new TaskResult
                 {
@@ -71,7 +71,7 @@ namespace Dots
             }
             else
             {
-                Environment.Exit(0);
+                return;
             }
         }
 
@@ -80,7 +80,7 @@ namespace Dots
             _tokenSource = new CancellationTokenSource();
             while (!_tokenSource.IsCancellationRequested)
             {
-                Thread.Sleep(_dotsProperty.Delay);
+                Thread.Sleep(_dotsProperty.GenerateDelay());
                 if (_checkInTask !=  null) {
                     _batchResults.Enqueue(_checkInTask);
                 } else

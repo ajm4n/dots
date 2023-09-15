@@ -48,9 +48,9 @@ namespace FileSystem
         {
             StringBuilder result = new StringBuilder();
 
-            try
+            foreach (DriveInfo objDrive in DriveInfo.GetDrives())
             {
-                foreach (DriveInfo objDrive in DriveInfo.GetDrives())
+                try
                 {
                     result.AppendLine($"Drive {objDrive.Name}");
                     result.AppendLine($"Volume Label: {objDrive.VolumeLabel}");
@@ -59,10 +59,10 @@ namespace FileSystem
                     result.AppendLine($"Free space: {Math.Round(objDrive.TotalFreeSpace / 1000000000.0, 2)} GB");
                     result.AppendLine();
                 }
-            }
-            catch (Exception ex)
-            {
-                result.AppendLine(ex.ToString());
+                catch (UnauthorizedAccessException)
+                {
+                    result.AppendLine("Permission denied");
+                }
             }
 
             return result.ToString();
@@ -81,30 +81,83 @@ namespace FileSystem
             {
                 directory = args[0];
             }
+
             if (!Directory.Exists(directory))
             {
-                throw new DirectoryNotFoundException($"Directory not found: {args[0]}");
+                return $"Directory not found: {args[0]}";
             }
 
             result.AppendLine($" Directory of {directory}");
-
-            string[] directories = Directory.GetDirectories(directory);
-            foreach (string dir in directories)
+            string[] directories;
+            try
             {
-                DirectoryInfo dirInfo = new DirectoryInfo(dir);
-                string date = dirInfo.LastWriteTime.ToString("MM/dd/yyyy  hh:mm tt");
-                result.AppendLine($"{date}    <DIR>          {dirInfo.Name}");
+                directories = Directory.GetDirectories(directory);
+            } catch (UnauthorizedAccessException)
+            {
+                return $"Permission Denied: {directory}";
             }
 
-            string[] files = Directory.GetFiles(directory);
+            foreach (string dir in directories)
+            {
+                try
+                {
+                    DirectoryInfo dirInfo = new DirectoryInfo(dir);
+                    string date = dirInfo.LastWriteTime.ToString("MM/dd/yyyy  hh:mm tt");
+                    result.AppendLine($"{date}    <DIR>          {dirInfo.Name}");
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    result.AppendLine($"Permission Denied: {dir}");
+                }
+            }
+
+
+            string[] files;
+            try
+            {
+                files = Directory.GetFiles(directory);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return $"Permission Denied: {directory}";
+            }
+
             foreach (string file in files)
             {
-                FileInfo fileInfo = new FileInfo(file);
-                string date = fileInfo.LastWriteTime.ToString("MM/dd/yyyy  hh:mm tt");
-                result.AppendLine($"{date}    {fileInfo.Length,15:N0} {fileInfo.Name}");
+                try
+                {
+                    FileInfo fileInfo = new FileInfo(file);
+                    string date = fileInfo.LastWriteTime.ToString("MM/dd/yyyy  hh:mm tt");
+                    result.AppendLine($"{date}    {fileInfo.Length,15:N0} {fileInfo.Name}");
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    result.AppendLine($"Permission Denied: {file}");
+                }
             }
 
             return result.ToString();
+        }
+    }
+
+    public class TypeCommand
+    {
+        public string Name => "type";
+
+        public string Execute(string[] args)
+        {
+            try
+            {
+                return File.ReadAllText(args[0]);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return $"Permission Denied: {args[0]}";
+            }
+            catch (FileNotFoundException)
+            {
+                return $"File {args[0]} does not exist";
+            }
         }
     }
 }

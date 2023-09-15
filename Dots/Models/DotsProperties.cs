@@ -10,10 +10,7 @@ namespace Dots.Models
 {
     public class DotsProperties
     {
-        public double Sleep = new Random().NextDouble() * (10.0 - 5.0) + 5.0;
-        public double Jitter = new Random().NextDouble() * (80.0 - 20.0) + 20.0;
-        //public int Delay => (int)(Sleep * Jitter);
-        public int Delay => 0;
+        private Random rand = new Random();
 
         public ConcurrentDictionary<int, Socket> Remotes = new ConcurrentDictionary<int, Socket>();
         public List<Object> Commands = new List<Object>();
@@ -27,6 +24,15 @@ namespace Dots.Models
 
             Remotes.TryAdd(key, socket);
             return key;
+        }
+
+        public int GenerateDelay()
+        {
+            int sleep = rand.Next(2000, 6001);
+            int jitter = rand.Next(20, 51);
+
+            double jitterAmount = sleep * (jitter / 100.0);
+            return sleep + (int)jitterAmount;
         }
     }
 }

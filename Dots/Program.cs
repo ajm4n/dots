@@ -22,6 +22,7 @@ namespace Dots
             _tokenSource = new CancellationTokenSource();
             while (!_tokenSource.IsCancellationRequested)
             {
+                Thread.Sleep(1);
                 if(_taskManager.RetrieveBatchRequest(out var tasks))
                 {
                     foreach (var task in tasks)
