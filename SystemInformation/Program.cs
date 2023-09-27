@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
-using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 
@@ -22,8 +21,9 @@ namespace SystemInformation
             string[] nameParts = identity.Name.Split('\\');
             string username = nameParts[1];
             string machineName = Dns.GetHostName();
-            string domain = (nameParts.Length > 0 && nameParts[0].ToLower() == machineName.ToLower()) ? "" : nameParts[0] + "/";
-            return IsAdministrator() + domain + username.ToLower() + "@" + machineName.ToLower();
+            string domain = (nameParts.Length > 0 && nameParts[0].ToLower() == machineName.ToLower()) ? ".\\" : nameParts[0] + "\\";
+            username = domain + username + "@" + machineName;
+            return IsAdministrator() ? "(" + username + ")" : username;
         }
         private enum TOKEN_INFORMATION_CLASS
         {
@@ -75,7 +75,7 @@ namespace SystemInformation
         [DllImport("kernel32.dll")]
         private static extern IntPtr LocalFree(IntPtr hMem);
 
-        private string IsAdministrator()
+        private bool IsAdministrator()
         {
             // Thanks to SharpUp for the code.
 
@@ -93,7 +93,7 @@ namespace SystemInformation
             if (!Result)
             {
                 Marshal.FreeHGlobal(TokenInformation);
-                return null;
+                return false;
             }
 
             TOKEN_GROUPS groups = (TOKEN_GROUPS)Marshal.PtrToStructure(TokenInformation, typeof(TOKEN_GROUPS));
@@ -115,10 +115,10 @@ namespace SystemInformation
             {
                 if (SID == "S-1-5-32-544")
                 {
-                    return "*";
+                    return true;
                 }
             }
-            return "";
+            return false;
         }
     }
 

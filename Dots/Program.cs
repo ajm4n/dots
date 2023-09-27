@@ -1,7 +1,10 @@
 ﻿using Dots.Models;
 using System;
+using System.Linq;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
+using SocketIOClient;
 using System.Threading;
 
 namespace Dots
@@ -9,33 +12,59 @@ namespace Dots
     public class Program
     {
         private static TaskManager _taskManager;
-        private static CancellationTokenSource _tokenSource;
-        private static readonly DotsProperties _dotsProperty = new DotsProperties();
+        private static DotsProperties _dotsProperty = new DotsProperties();
+        private static SocketIO _socketIOClient;
 
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
+            // Load STDAPI
             LoadDotsCommands();
+
+            // Setup TaskManager for HTTP
             _taskManager = new TaskManager(args[0]);
             _taskManager.Init();
-            _taskManager.InitialCheckin(args[1]);
-            _taskManager.Start(_dotsProperty);
-            _tokenSource = new CancellationTokenSource();
-            while (!_tokenSource.IsCancellationRequested)
+            _dotsProperty.TaskManager = _taskManager;
+            string _checkInTaskId = _taskManager.InitialCheckin(args[1]);
+            if (_checkInTaskId == null)
             {
-                Thread.Sleep(1);
-                if(_taskManager.RetrieveBatchRequest(out var tasks))
+                return;
+            }
+
+            _taskManager.Start(_dotsProperty);
+
+
+            // Setup SocketIOClient for interactive
+            _socketIOClient = new SocketIO(args[0], new SocketIOOptions
+            {
+                Auth = _checkInTaskId
+            });
+            _socketIOClient.On("ping", response =>
+            {
+                Ping();
+            });
+            _socketIOClient.On("tasks", response =>
+            {
+                TaskRequest[] batchRequest = response.GetValue<TaskRequest[]>();
+                _taskManager.ParseBatchRequest(batchRequest);
+            });
+            _dotsProperty.SocketIOClient = _socketIOClient;
+            while (!_dotsProperty.ExecuteTasks.IsCancellationRequested)
+            {
+                if (_taskManager.RetrieveBatchRequest(out var tasks))
                 {
+
                     foreach (var task in tasks)
                     {
                         ExecuteTask(task);
                     }
                 }
+                await Task.Delay(100);
             }
         }
 
-        public void Stop()
+        private static void Ping()
         {
-            _tokenSource.Cancel();
+            _socketIOClient.EmitAsync("pong");
         }
 
         private static void LoadDotsCommands()
@@ -46,7 +75,7 @@ namespace Dots
             {
                 if (type.IsSubclassOf(typeof(DotsCommand)))
                 {
-                    DotsCommand command = (DotsCommand) Activator.CreateInstance(type);
+                    DotsCommand command = (DotsCommand)Activator.CreateInstance(type);
                     command.DotsProperty = _dotsProperty;
                     _dotsProperty.Commands.Add(command);
                 }
@@ -60,24 +89,32 @@ namespace Dots
                 try
                 {
                     Type commandType = command.GetType();
+
                     PropertyInfo nameProperty = commandType.GetProperty("Name");
- 
-                    if (nameProperty == null || nameProperty.PropertyType != typeof(string))
+
+                    if (nameProperty == null)
                     {
                         // The command object does not have a valid "Name" property
-                        continue;
+                        NotImplementedException exception = new NotImplementedException("Name property not implemented.");
+                        throw exception;
+                    }
+
+                    if (nameProperty.PropertyType != typeof(string))
+                    {
+                        // The command "Name" property is not a string
+                        InvalidCastException exception = new InvalidCastException("Name property not a string.");
+                        throw exception;
                     }
 
                     MethodInfo executeMethod = commandType.GetMethod("Execute");
                     if (executeMethod == null)
                     {
                         // The command object does not have a valid "Execute" property
-                        continue;
+                        NotImplementedException exception = new NotImplementedException("Execute property not implemented.");
+                        throw exception;
                     }
 
                     string name = (string)nameProperty.GetValue(command);
-
-                   
 
                     if (name == task.Method)
                     {
@@ -99,10 +136,17 @@ namespace Dots
                             Result = (string)result,
                             Id = task.Id
                         };
-                        _taskManager.SendResult(Result);
+                        if (_dotsProperty.Interactive)
+                        {
+
+                            _dotsProperty.SocketIOClient.EmitAsync("batch_response", Result);
+                        }
+                        else
+                        {
+                            _taskManager.SendResult(Result);
+                        }
                         return;
                     }
-
                 }
                 catch (Exception ex)
                 {
@@ -116,7 +160,15 @@ namespace Dots
                         },
                         Id = task.Id
                     };
-                    _taskManager.SendError(failedToExecuteError);
+                    if (_dotsProperty.Interactive)
+                    {
+
+                        _dotsProperty.SocketIOClient.EmitAsync("batch_response", failedToExecuteError);
+                    }
+                    else
+                    {
+                        _taskManager.SendError(failedToExecuteError);
+                    }
                     return;
                 }
             }
@@ -131,7 +183,12 @@ namespace Dots
                 },
                 Id = task.Id,
             };
-            _taskManager.SendError(methodNotSupportedError);
-        }
+            if (_dotsProperty.Interactive) { 
+
+                _dotsProperty.SocketIOClient.EmitAsync("batch_response", methodNotSupportedError);
+            } else {
+                    _taskManager.SendError(methodNotSupportedError);
+            }
+        }   
     }
 }
