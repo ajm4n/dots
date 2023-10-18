@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
@@ -13,8 +12,9 @@ namespace SystemInformation
     public class WhoamiCommand
     {
         public string Name => "whoami";
+        public dynamic DotsProperty { get; set; }
 
-        public string Execute(string[] args)
+        public string Execute(dynamic task)
         {
             WindowsIdentity identity = WindowsIdentity.GetCurrent();
             
@@ -125,8 +125,9 @@ namespace SystemInformation
     public class HostnameCommand
     {
         public string Name => "hostname";
+        public dynamic DotsProperty { get; set; }
 
-        public string Execute(string[] args)
+        public string Execute(dynamic task)
         {
             return "DNS: " + Dns.GetHostName() + "\nNETBIOS: " + Environment.MachineName;
         }
@@ -135,8 +136,8 @@ namespace SystemInformation
     public class OsCommand
     {
         public string Name => "os";
-
-        public string Execute(string[] args)
+        public dynamic DotsProperty { get; set; }
+        public string Execute(dynamic task)
         {
             OperatingSystem os = Environment.OSVersion;
             if (os.Platform == PlatformID.Win32NT)
@@ -155,8 +156,10 @@ namespace SystemInformation
     public class PidCommand
     {
         public string Name => "pid";
+        public dynamic DotsProperty { get; set; }
 
-        public string Execute(string[] args)
+
+        public string Execute(dynamic task)
         {
             return Process.GetCurrentProcess().Id.ToString();
         }
@@ -165,7 +168,9 @@ namespace SystemInformation
     public class IntegrityCommand
     {
         public string Name => "integrity";
-        public string Execute(string[] args)
+        public dynamic DotsProperty { get; set; }
+
+        public string Execute(dynamic task)
         {
             WindowsPrincipal principal = new WindowsPrincipal(WindowsIdentity.GetCurrent());
             return principal.IsInRole(WindowsBuiltInRole.Administrator) ? "High" : "Medium";
@@ -175,8 +180,9 @@ namespace SystemInformation
     public class IpCommand
     {
         public string Name => "ip";
+        public dynamic DotsProperty {  get; set; }
 
-        public string Execute(string[] args)
+        public string Execute(dynamic task)
         {
             List<string> cidrNotations = new List<string>();
 
@@ -197,15 +203,4 @@ namespace SystemInformation
             return cidrNotations.Count > 0 ? string.Join(", ", cidrNotations) : "No Interfaces";
         }
     }
-
-    public class PwdCommand
-    {
-        public string Name => "pwd";
-
-        public string Execute(string[] args)
-        {
-            return Directory.GetCurrentDirectory();
-        }
-    }
-
 }

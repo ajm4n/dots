@@ -13,7 +13,6 @@ namespace Spawn
 {
     public class Spawn
     {
-
         public string Name => "spawn";
         public void Execute(string[] args)
         {

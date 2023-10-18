@@ -1,16 +1,15 @@
 ﻿using System;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Security.Principal;
 using System.Text;
 
 namespace ByPause
 {
     public class ByPause
     {
-        public static string Name => "bypause";
+        public string Name => "bypause";
 
-        public static string Execute(string[] args)
+        public string Execute(string[] args)
         {
             uint oldProtect;
 
@@ -39,7 +38,7 @@ namespace ByPause
             return "Succesfully paused";
         }
 
-        static byte[] GetFirstPause
+        private byte[] GetFirstPause
         {
             get
             {
@@ -58,7 +57,7 @@ namespace ByPause
             }
         }
 
-        static byte[] GetSecondPause
+        private byte[] GetSecondPause
         {
             get
             {

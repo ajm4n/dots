@@ -13,7 +13,7 @@ namespace Processes
     public class PS
     {
         public string Name => "ps";
-        public string Execute(string[] args)
+        public string Execute(dynamic task)
         {
             ManagementScope scope = new System.Management.ManagementScope(@"\\.\root\cimv2");
             scope.Connect();

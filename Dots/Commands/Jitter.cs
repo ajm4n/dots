@@ -9,10 +9,10 @@ namespace Dots.Commands
         public override string Name => "jitter";
         public override DotsProperties DotsProperty { get; set; }
 
-        public override string Execute(string[] args)
+        public override string Execute(TaskRequest task)
         {
-            DotsProperty.sleep = int.Parse(args[0]);
-            return $"Succesfully set jitter to  {args[0]} module.";
+            DotsProperty.Jitter = int.Parse(task.Params[0]);
+            return $"Succesfully set jitter to {task.Params[0]}";
         }
     }
 }

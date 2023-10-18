@@ -8,25 +8,18 @@ namespace Dots.Commands
         public override string Name => "interactive";
         public override DotsProperties DotsProperty { get; set; }
 
-        public override string Execute(string[] args)
+        public override string Execute(TaskRequest task)
         {
-            if (DotsProperty.Interactive)
+            if (DotsProperty.SocketIOClient.Connected)
             {
                 DotsProperty.SocketIOClient.DisconnectAsync();
-                DotsProperty.Interactive = false;
-                DotsProperty.ProcessTasks = true;
-                DotsProperty.TaskManager.Start(DotsProperty);
+                DotsProperty.RetrieveTasks = true;
+                DotsProperty.TaskManager.RetrieveTasks();
                 return "Interactive Stopped";
             } else
             {
-                try
-                {
-                    DotsProperty.SocketIOClient.ConnectAsync();
-                    DotsProperty.Interactive = true;
-                    DotsProperty.ProcessTasks = false;
-                } catch {
-                    return "Failed to connect";
-                }
+                DotsProperty.SocketIOClient.ConnectAsync();
+                DotsProperty.RetrieveTasks = false;
                 return "Interactive Started";
             }
         }

@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using SocketIOClient;
 
 namespace Dots.Models
@@ -13,43 +10,38 @@ namespace Dots.Models
     public class DotsProperties
     {
         private Random rand = new Random();
-        public TaskManager TaskManager { get; set; }
-        public SocketIO SocketIOClient {  get; set; }
+        public Dictionary<long, Socket> RemoteConnections = new Dictionary<long, Socket>();
         public CancellationTokenSource ExecuteTasks = new CancellationTokenSource();
-        public bool ProcessTasks = true;
-        public bool Interactive = false;
-
-        public ConcurrentDictionary<int, Socket> Remotes = new ConcurrentDictionary<int, Socket>();
-        public List<Object> Commands = new List<Object>();
-
-        public int sleep = -1;
-        public int jitter = -1;
-        public int AddRemote(Socket socket)
-        {
-            int key;
-            do
-            {
-                key = new Random().Next();
-            } while (Remotes.ContainsKey(key));
-
-            Remotes.TryAdd(key, socket);
-            return key;
-        }
+        public bool RetrieveTasks = true;
+        public TaskManager TaskManager { get; set; }
+        public SocketIO SocketIOClient { get; set; }
+        public List<object> Commands { get; } = new List<object>();
+        public int Sleep { get; set; } = -1;
+        public int Jitter { get; set; } = -1;
 
         public int GenerateDelay()
         {
-            if (sleep < 0)
+            if (Sleep < 0)
             {
-                sleep = rand.Next(2000, 6001);
+                Sleep = rand.Next(2000, 6001);
             }
 
-            if (jitter < 0)
+            if (Jitter < 0)
             {
-                jitter = rand.Next(20, 51);
+                Jitter = rand.Next(20, 51);
             }
 
-            double jitterAmount = sleep * (jitter / 100.0);
-            return sleep + (int)jitterAmount;
+            double jitterAmount = Sleep * (Jitter / 100.0);
+            return Sleep + (int)jitterAmount;
         }
+
+        public void RegisterEventHandler(string eventName, Action<object> eventHandler)
+        {
+            SocketIOClient.On(eventName, response =>
+            {
+                eventHandler(response.GetValue<string>());
+            });
+        }
+
     }
 }

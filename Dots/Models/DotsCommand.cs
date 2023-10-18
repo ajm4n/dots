@@ -8,7 +8,7 @@ namespace Dots.Models
     {
         public abstract string Name { get; }
         public abstract DotsProperties DotsProperty { get; set; }
-        public abstract string Execute(string[] args);
+        public abstract string Execute(TaskRequest task);
         public static byte[] Zor(byte[] input, string key)
         {
             int _key = Int32.Parse(key);
