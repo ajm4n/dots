@@ -13,6 +13,7 @@ namespace Processes
     public class PS
     {
         public string Name => "ps";
+        public dynamic DotsProperty { get; set; }
         public string Execute(dynamic task)
         {
             ManagementScope scope = new System.Management.ManagementScope(@"\\.\root\cimv2");
@@ -123,7 +124,7 @@ namespace Processes
         internal static extern bool IsWow64Process([In] IntPtr process, [Out] out bool wow64Process);
 
         [DllImport("user32.dll", ExactSpelling = true, CharSet = CharSet.Auto)]
-        public static extern IntPtr GetParent(IntPtr hWnd);
+        private static extern IntPtr GetParent(IntPtr hWnd);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern int GetProcessId(IntPtr hProcess);
@@ -131,7 +132,7 @@ namespace Processes
         /// A utility class to determine a process parent.
         /// </summary>
         [StructLayout(LayoutKind.Sequential)]
-        public struct ParentProcessUtilities
+        private struct ParentProcessUtilities
         {
             // These members must match PROCESS_BASIC_INFORMATION
             internal IntPtr Reserved1;

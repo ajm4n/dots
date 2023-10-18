@@ -14,7 +14,8 @@ namespace Spawn
     public class Spawn
     {
         public string Name => "spawn";
-        public void Execute(string[] args)
+        public dynamic DotsProperty { get; set; }
+        public void Execute(dynamic task)
         {
             new Thread(() =>
             {
@@ -22,7 +23,7 @@ namespace Spawn
                 AppDomain appDomain = AppDomain.CreateDomain(new Random().Next().ToString());
                 string assemblyName = assembly.FullName;
                 appDomain.Load(assemblyName);
-                appDomain.ExecuteAssemblyByName(assemblyName, args);
+                appDomain.ExecuteAssemblyByName(assemblyName, task.Params);
             }).Start();
         }
     }

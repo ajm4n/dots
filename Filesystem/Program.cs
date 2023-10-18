@@ -7,6 +7,7 @@ namespace FileSystem
     public class UploadCommand
     {
         public string Name => "upload";
+        public dynamic DotsProperty { get; set; }
 
         public string Execute(dynamic task)
         {
@@ -31,6 +32,7 @@ namespace FileSystem
     public class DownloadCommand
     {
         public string Name => "download";
+        public dynamic DotsProperty { get; set; }
 
         public byte[] Execute(dynamic task)
         {
@@ -43,6 +45,7 @@ namespace FileSystem
     public class DrivesCommand
     {
         public string Name => "drives";
+        public dynamic DotsProperty { get; set; }
 
         public string Execute(dynamic task)
         {
@@ -72,12 +75,13 @@ namespace FileSystem
     public class DirCommand
     {
         public string Name => "dir";
+        public dynamic DotsProperty { get; set; }
 
         public string Execute(dynamic task)
         {
             StringBuilder result = new StringBuilder();
             string directory = Directory.GetCurrentDirectory();
-            if (task.Length > 0)
+            if (task.Params.Length > 0)
             {
                 directory = task.Params[0];
             }
@@ -126,6 +130,7 @@ namespace FileSystem
     public class TypeCommand
     {
         public string Name => "type";
+        public dynamic DotsProperty { get; set; }
 
         public string Execute(dynamic task)
         {
@@ -136,6 +141,7 @@ namespace FileSystem
     public class PwdCommand
     {
         public string Name => "pwd";
+        public dynamic DotsProperty { get; set; }
 
         public string Execute(dynamic task)
         {

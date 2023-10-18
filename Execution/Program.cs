@@ -10,6 +10,7 @@ namespace Execution
     public class Shell
     {
         public string Name => "shell";
+        public dynamic DotsProperty { get; set; }
 
         public string Execute(dynamic task)
         {
@@ -45,6 +46,7 @@ namespace Execution
     public class ExecuteAssembly
     {
         public string Name => "execute-assembly";
+        public dynamic DotsProperty { get; set; }
 
         public string Execute(dynamic task)
         {

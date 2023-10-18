@@ -8,8 +8,9 @@ namespace ByPause
     public class ByPause
     {
         public string Name => "bypause";
+        public dynamic DotsProperty { get; set; }
 
-        public string Execute(string[] args)
+        public string Execute(dynamic task)
         {
             uint oldProtect;
 
