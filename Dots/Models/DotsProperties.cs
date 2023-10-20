@@ -11,6 +11,7 @@ namespace Dots.Models
     {
         private Random rand = new Random();
         public Dictionary<long, Socket> RemoteConnections = new Dictionary<long, Socket>();
+        public Socket StreamServeListener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         public CancellationTokenSource ExecuteTasks = new CancellationTokenSource();
         public bool RetrieveTasks = true;
         public TaskManager TaskManager { get; set; }
